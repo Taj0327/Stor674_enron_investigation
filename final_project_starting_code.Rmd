@@ -1,0 +1,50 @@
+---
+title: "Final Project - Option 3"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE, autodep=TRUE, cache.comments=TRUE)
+```
+
+This project involves natural language processing and you will practice your R skills including for loops, data visualization, string manipulation and network modeling. 
+
+## Introduction
+
+This dataset is named Enron Corpus, which was collected and prepared by the CALO Project (Cognitive Assistant that Learns and Organizes). It contains data from about 150 users, mostly senior management of Enron, organized into folders. The corpus contains a total of about 0.5M messages. This data was originally made public, and posted to the web, by the Federal Energy Regulatory Commission during its investigation.
+
+The email dataset was later purchased by Leslie Kaelbling at MIT, and turned out to have a number of integrity problems. A number of folks at SRI, notably Melinda Gervasio, worked hard to correct these problems, and it is thanks to them that the dataset is available. The dataset here does not include attachments, and some messages have been deleted "as part of a redaction effort due to requests from affected employees." Invalid email addresses were converted to something of the form user@enron.com whenever possible (i.e., recipient is specified in some parse-able format like "Doe, John" or "Mary K. Smith") and to no_address@enron.com when no recipient was specified.
+
+This dataset, along with a thorough
+explanation of its origin, is available at http://www-2.cs.cmu.edu/~enron/. I have downloaded it and put it into a [dropbox folder](https://www.dropbox.com/scl/fo/712oxzf2kgg1r1df2amxp/ANXbJZitucnO8e15U7hkXsE?rlkey=6hv233scvw1pzdjdhd5fljlgp&dl=0). In the folder, there is a R script (`starting_code.R`) giving you some examples how to handle the data - reading, extracting information and so on. 
+
+This project is then aiming at analyzing this big real email data set. Below I list some problems to explore. Feel free to add more analyses that are interesting to you. 
+
+Problems to be explored
+===
+
+1. As you can see that my code is just for demonstrating purpose, and it is not well functioning because: 1.  the email names I extracted are contaminated, e.g., some names are "houston <.ward@", and "pr <.palmer@"; 2. there are multiple folders for each person. You need to improve my code. At the very beginning, you want to do data exploration: how many unique users/email addresses we have in this email and how many of them belong to the company. 
+
+2. Plot a figure to show the total number of emails sending and receiving by each employee in this company. Hit: Plot two figures, one for sending and one for receiving.  Rank the total numbers increasingly and show top 10 people who got the most emails and who sent the most emails. Try to do a little reading of this public dataset and maybe figure out their roles in the company. 
+
+3. Plot another figure to show the interaction between people in this company. You need first get the unique users in this company, and then find out who sent who how many emails. For example, for two people named as A and B, get the total number of emails that A sent to B and the total number of emails that B sent to A. Let's say there are 150 people in this company, you will get a matrix of 150*150. Let the diagonal of this matrix being 0s (since we don't care emails that people sent to himself).  After alphabet sorting all people in the company, you assign each people's name to the column and rows names. 
+
+    For the email count matrix, fill the element in (a-th row,b-th column) as the total number of emails the a-th person sent to the b-th person, and then plot this matrix. 
+
+4. Other intereting plots to show the data or some information in the data to your classmates. 
+
+5. Now you want to something interesting data analysis. Assuming that the matrix name you built at step 3 is called `matrix.email.number.stat`, now get a new matrix named `network.email.communication`.
+
+    `network.email.communication` can be considered as a social network data, indicating how often two staffs in this company communicating with each other. Let's treat this data as a network and perform network analysis.  Each employee is a node in the network. Try to teach yourself the iGraph package, which is a powerful tool to analyze networks. Tyr to use functions in the iGraph to visulize the network data, perform community detection and other network data analyses. Note, a community is a group of nodes that are more connected with each other than with any other node.
+
+    The graph will you a lot about the group of employees in the Enron corpus and how they relate to each other. Each of the communities represents a tightly connected group of employees that mainly e-mail each other.  Explain your results in the report. 
+    
+```{r,eval=FALSE}
+network.email.communication = matrix.email.number.stat + t(matrix.email.number.stat)
+```   
+
+6. Email clustering or classification. Try to identify a clustering or classification task from the the data and develop methods to evaluate your idea. You can read  `klimt-ecml04.pdf` in the `\data` folder to get a better idea on how to do email clustering.  
+
+
+
