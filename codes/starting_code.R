@@ -2,8 +2,14 @@
 # Create list of all available e-mails
 rm(list=ls())
 
+library(rstudioapi)
+
+mother_path <- rstudioapi::getActiveDocumentContext()$path
+
+Sys.setenv(enron = '/Users/tangaoji/Stor674_enron_investigation')
+
 #Retrieval all files in the maildir
-emails.all.files <- list.files("enron_mail_20150507/maildir/", full.names = T, recursive = T)
+emails.all.files <- list.files("data/enron_mail_20150507/maildir/", full.names = T, recursive = T)
 length(emails.all.files)
 
 #Filter by inbox only

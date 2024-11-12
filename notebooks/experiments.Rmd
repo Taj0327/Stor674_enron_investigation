@@ -1,0 +1,335 @@
+---
+title: "Experiments_notebook"
+author: "Aoji Tang"
+date: "2024-11-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rstudioapi)
+library(stringr)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+library(igraph)
+library(reshape2)
+```
+
+First, we set the paths of all the mail data. And the `mother_path` for the project, containing data, code, notebooks, etc.
+
+```{r}
+# set the paths and working directory
+
+path <- rstudioapi::getActiveDocumentContext()$path # get the file path for this notebook
+mother_path <- dirname(dirname(path)) # since this notebook is under /notebooks, we just use its grandparent's path
+mails_path <- paste0(mother_path, '/data/enron_mail_20150507/maildir/') # set the path for the folder containing all the mails
+```
+
+Retrieve all the email names and all of inbox emails' names.
+
+```{r}
+# Retrieval all files in the maildir
+
+emails.all.files <- list.files(mails_path, full.names = T, recursive = T)
+cat('The dataset contains', length(emails.all.files), 'emails in total')
+save(emails.all.files, file = paste0(mother_path, "/results/emails_all_files.Rdata"))
+
+# Filter by inbox only
+
+emails.inbox.files <- emails.all.files[grep("/inbox", emails.all.files)]
+cat('The dataset contains', length(emails.inbox.files), 'inbox mails in total.')
+save(emails.inbox.files, file = paste0(mother_path, "/results/emails_inbox_files.Rdata"))
+```
+
+Filtering all the inbox emails within the company (by filtering all the emails sent by another mail address ending with "\@enron.com". Then, extracting all the **FROM** mailnames, and use the folder name as **TO** entries.
+
+```{r}
+# Create list of sender and receiver (inbox owner)
+
+inboxes.from.to.raw.df <- data.frame(
+  from = apply(as.data.frame(emails.inbox.files), 1, function(x){readLines(x, warn = F)[3]}), # read all the FROM lines
+  to = emails.inbox.files, # use the folder name for TO
+  stringsAsFactors = F # remain the strings as characters
+)
+
+# Continue processing inboxes.from.to.raw.df
+
+inboxes.from.to.raw.df <- inboxes.from.to.raw.df %>%
+  filter(grepl("@enron.com", from))  # Filter for inside-company emails by filtering all the address end with "@enron.com"
+
+inboxes.from.to.raw.df <- inboxes.from.to.raw.df %>% mutate(
+    from = str_sub(from, 7, nchar(from) - 10),  # Extract "FROM" email address by cutting "@enron.com" in the end
+    to = sapply(str_split(inboxes.from.to.raw.df$to, "/"), "[", 9)     # Extract "TO" name from folder name
+  )
+
+```
+
+Create a list of user folder names and filter by whether active or not by detecting their "sent" folders. Then collect all the mailnames a user would use (for example, allen-p has k..allen and philips.allen both as his mailname). In the end, the `users` dataframe contains three columns: `user.folder`, `mailname` and `name`(folder name, such as allen-p). 
+
+**REMARK**: There is a sub-folder in the "/sent_items/" folder in pereira-s named "clickathome", after checking the only email's content in it (ads), we choose to remove it from our investigation.
+
+```{r}
+# Create list of usernames in inboxes and remove those users without "sent mails" (inactive account)
+
+users <- data.frame(user.folder = paste0(mails_path, unique(inboxes.from.to.raw.df$to))) # add a user.folder column
+sent <- apply(users, 1, function(x){sum(grepl("sent", dir(x)))}) # filter the users by active or not
+users <- subset(users, sent != 0)
+
+# Replace user.folder name with e-mail name
+
+users <- users %>%
+  mutate(mailname = vector("list", length = nrow(users)))
+
+# There is a sub-folder in the "/sent_items/" folder in pereira-s named "clickathome", after checking the only email's content in it (ads), we choose to remove it from our investigation
+
+all_possible_mailnames <- c() # store all the mailnames so that we can filter the mails by all the mailnames we have
+
+for (i in 1:nrow(users)){
+  
+  # for each user, list all his folders
+  all_folder_names <- list.dirs(users$user.folder[i], recursive=T, full.names=T)
+  
+  # get all folders named including "sent", so that we can have all the mailnames one uses
+  sent_folders <- all_folder_names[grepl("sent", basename(all_folder_names), ignore.case = TRUE)]
+  my_namelist <- c() # store the user's mailnames
+  
+  for (sent_folder in sent_folders){
+    
+    # get a list of all mails sent
+    sentmail <- dir(sent_folder)
+    
+    # for each mail, extract the mailnames the user uses and store it as a list in the dataframe 'users'
+    for (j in range(length(sentmail))){
+      name <- readLines(paste0(sent_folder,'/', sentmail[j]), warn = F)[3] 
+      name <- str_sub(name, 7, nchar(name)-10)
+      
+      # if the name is not in the list, then add it
+      if (!(name %in% my_namelist)){ 
+        my_namelist <- c(my_namelist, name)
+        all_possible_mailnames <- c(all_possible_mailnames, name)
+      }
+      
+    }
+    
+  }
+  users$mailname[[i]] <- my_namelist # add the mailname list to one's row
+}
+
+# print(users$mailname)
+
+# clean all the mailnames with regex, removing @ and special characters, leaving all the dots(.)
+users <- users %>%
+    mutate(
+    mailname = map(mailname, ~ str_replace_all(.x, "[< >*@]", "")) %>%  # Apply regex to each element in the list
+      map(~ str_replace_all(.x, "@$", ""))  # Apply second regex
+  )
+
+# get a column to connect the mailnames with the names.
+users <- users %>%
+  mutate(name = sapply(str_split(user.folder, '/'), '[', 8)) 
+
+# users[1:10, ]
+```
+
+Further, we pick out all the inbox mails that are sent within all the `users` we have til now. And we plot four histograms on the number of mails received/sent with or without screening by at least 10.
+
+```{r}
+# filter the mails by asking both the sender and receivers are in our users list
+inboxes.within.fromto.df <- inboxes.from.to.raw.df %>%
+  filter(from %in% all_possible_mailnames)
+# print(inboxes.within.fromto.df)
+
+# match the mailnames with names
+inboxes.within.fromto.df <- inboxes.within.fromto.df %>%
+  mutate(match_row = match(from, users$mailname)) %>%
+  filter(!is.na(match_row)) %>%
+  mutate(name = users$name[match_row], from = name) %>%
+  select(-match_row, -name)
+
+# inboxes.within.fromto.df
+
+# make histograms of all the receivers and senders
+hist_sent <- ggplot(inboxes.within.fromto.df, aes(x = from)) +
+  geom_bar() +
+  labs(title = "histogram of inbox emails sent within company", x = 'Sent by:') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+hist_received <- ggplot(inboxes.within.fromto.df, aes(x = to)) +
+  geom_bar() +
+  labs(title = "histogram of inbox emails received within company", x = 'Sent to:') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot(hist_received)
+plot(hist_sent)
+
+# make plots for filtered data
+filtered_sent <- inboxes.within.fromto.df %>%
+  group_by(from) %>%
+  filter(n() >= 10) %>%
+  ungroup()
+
+hist_sent <- ggplot(filtered_sent, aes(x = from)) +
+  geom_bar() +
+  labs(title = "histogram of inbox emails sent within company (>=10)", x = 'Sent by:') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+filtered_receive <- inboxes.within.fromto.df %>%
+  group_by(to) %>%
+  filter(n() >= 10) %>%
+  ungroup()
+
+hist_received <- ggplot(filtered_receive, aes(x = to)) +
+  geom_bar() +
+  labs(title = "histogram of inbox emails received within company(>=10)", x = 'Sent to:') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot(hist_received)
+plot(hist_sent)
+```
+
+```{r}
+# Get the unique senders and recipients
+all_names <- unique(c(inboxes.within.fromto.df$from, inboxes.within.fromto.df$to))
+
+# Create a contingency table with a predefined set of row and column names
+mail_count_table <- table(factor(inboxes.within.fromto.df$from, levels = all_names), factor(inboxes.within.fromto.df$to, levels = all_names))
+
+# print(table_inboxes_from_to_within)
+
+mail_count_df <- melt(mail_count_table)
+
+# Create a heatmap using ggplot2
+ggplot(mail_count_df, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "blue") +
+  labs(title = "Email Interaction Heatmap", x = "From", y = "To", fill = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Create a graph from the matrix
+graph <- graph_from_adjacency_matrix(mail_count_table, mode = "undirected", weighted = TRUE, diag = FALSE)
+# Filter edges with low weight (e.g., below a threshold)
+# graph <- delete_edges(graph, E(graph)[weight < 5])
+community <- cluster_louvain(graph)
+png("email_cluster.png", width=3200, height = 3200)
+plot(community, graph)
+dev.off()
+
+layout <- layout_with_fr(graph)  # Fruchterman-Reingold layout (often better for clarity)
+png("email_network.png", width = 3200, height = 2400)  # Width and height in pixels
+
+
+# Plot the network graph with adjustments
+plot(graph, 
+     vertex.size = 5,        # Larger nodes
+     vertex.label.cex = 0.8,  # Adjust text size
+     edge.width = E(graph)$weight,  # Edge width based on the weight (email count)
+     layout = layout,         # Use the new layout for better node spacing
+     main = "Email Interaction Network",
+     vertex.label.color = "black", # Change label color for contrast
+     vertex.color = "lightblue",  # Node color
+     edge.arrow.size = 0.5,   # Adjust arrow size on edges
+     edge.color = "gray",     # Edge color
+     vertex.label.dist = 1,   # Distance between label and node
+     vertex.frame.color = "white")  # Frame color around nodes
+
+# Close the PNG device (save the plot)
+dev.off()
+```
+
+```{r}
+library(pheatmap)
+heatmap(table_inboxes_from_to_within)
+```
+What happened to causholli-m? (he/she form a cluster him/herself.)
+
+```{r}
+causholli_inbox <- inboxes.from.to.raw.df%>%
+  filter(to == 'causholli-m') %>%
+  filter(from %in% all_possible_mailnames)
+```
+It is just one email he/she sent him/herself,and that's why she is the only group.
+
+----------------------------------------------------------------------------------
+
+**Now we focus on all the emails within the enron company**:
+
+```{r}
+# Create list of sender and receiver (inbox owner)
+
+all.fromto.rawdf <- data.frame(
+  from = apply(as.data.frame(emails.all.files), 1, function(x){readLines(x, warn = F)[3]}), # read all the FROM lines
+  to = emails.all.files, # use the folder name for TO
+  stringsAsFactors = F # remain the strings as characters
+)
+
+# Continue processing inboxes.from.to.raw.df
+
+all.fromto.rawdf <- all.fromto.rawdf %>%
+  filter(grepl("@enron.com", from))  # Filter for inside-company emails by filtering all the address end with "@enron.com"
+
+all.fromto.rawdf <- all.fromto.rawdf %>% mutate(
+    from = str_sub(from, 7, nchar(from) - 10),  # Extract "FROM" email address by cutting "@enron.com" in the end
+    to = sapply(str_split(all.fromto.rawdf$to, "/"), "[", 9)     # Extract "TO" name from folder name
+  )
+
+all.fromto.rawdf
+```
+
+Create a list of user folder names and filter by whether active or not by detecting their "sent" folders. Then collect all the mailnames a user would use (for example, allen-p has k..allen and philips.allen both as his mailname). In the end, the `users` dataframe contains three columns: `user.folder`, `mailname` and `name`(folder name, such as allen-p). 
+
+**REMARK**: There is a sub-folder in the "/sent_items/" folder in pereira-s named "clickathome", after checking the only email's content in it (ads), we choose to remove it from our investigation.
+
+```{r}
+# filter the mails by asking both the sender and receivers are in our users list
+all.within.fromto.df <- all.fromto.rawdf %>%
+  filter(from %in% all_possible_mailnames)
+# print(inboxes.within.fromto.df)
+
+# match the mailnames with names
+all.within.fromto.df <- all.within.fromto.df %>%
+  mutate(match_row = match(from, users$mailname)) %>%
+  filter(!is.na(match_row)) %>%
+  mutate(name = users$name[match_row], from = name) %>%
+  select(-match_row, -name)
+
+# inboxes.within.fromto.df
+
+# make histograms of all the receivers and senders
+hist_sent <- ggplot(all.within.fromto.df, aes(x = from)) +
+  geom_bar() +
+  labs(title = "histogram of all emails sent within company", x = 'Sent by:') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+hist_received <- ggplot(all.within.fromto.df, aes(x = to)) +
+  geom_bar() +
+  labs(title = "histogram of all emails received within company", x = 'Sent to:') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot(hist_received)
+plot(hist_sent)
+
+# make plots for filtered data
+filtered_sent <- all.within.fromto.df %>%
+  group_by(from) %>%
+  filter(n() >= 100) %>%
+  ungroup()
+
+hist_sent <- ggplot(filtered_sent, aes(x = from)) +
+  geom_bar() +
+  labs(title = "histogram of all emails sent within company (>=10)", x = 'Sent by:') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+filtered_receive <- all.within.fromto.df %>%
+  group_by(to) %>%
+  filter(n() >= 100) %>%
+  ungroup()
+
+hist_received <- ggplot(filtered_receive, aes(x = to)) +
+  geom_bar() +
+  labs(title = "histogram of all emails received within company(>=10)", x = 'Sent to:') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot(hist_received)
+plot(hist_sent)
+```
