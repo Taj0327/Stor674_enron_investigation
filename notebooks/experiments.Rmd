@@ -74,7 +74,6 @@ cat('The dataset contains', length(emails.all.files), 'emails in total')
 # save(emails.all.files, file = paste0(mother_path, "/results/emails_all_files.Rdata")) 
 # load(file = paste0(mother_path, "/results/emails_all_files.Rdata"))
 
-
 # Filter by inbox emails only with regex
 
 emails.inbox.files <- emails.all.files[grep("/inbox", emails.all.files)]
@@ -106,7 +105,8 @@ inboxes.from.to.df <- inboxes.from.to.raw.df %>%
 
 inboxes.from.to.df <- inboxes.from.to.df %>% mutate(
     from = str_sub(from, 7, nchar(from) - 10),  # Extract "FROM" email address by cutting "@enron.com" in the end
-    to = sapply(str_split(inboxes.from.to.df$to, "/"), "[", 9)     # Extract "TO" name from folder name
+    to = str_remove(to, pattern = mails_path),   # Extract "TO" name from folder name
+    to = sapply(str_split(to, "/"), "[", 2)
   )
 
 ```
@@ -150,11 +150,12 @@ for (i in 1:nrow(users)){
   for (sent_folder in sent_folders){
     
     # get a list of all mails sent
-    sentmail <- dir(sent_folder)
+    sentmail <- dir(sent_folder, full.names = T)
+    sentmail <- sentmail[file.info(sentmail)$isdir == FALSE]
     
     # for each mail, extract the mailnames the user uses and store it as a list in the dataframe 'users'
     for (j in range(length(sentmail))){
-      name <- readLines(paste0(sent_folder,'/', sentmail[j]), warn = F)[3] 
+      name <- readLines(sentmail[j], warn = F)[3] 
       name <- str_sub(name, 7, nchar(name)-10)
       
       # if the name is not in the list, then add it
@@ -180,8 +181,8 @@ users <- users %>%
 
 # get a column to connect the mailnames with the names.
 users <- users %>%
-  mutate(name = sapply(str_split(user.folder, '/'), '[', 8)) 
-
+  mutate(name = str_remove(user.folder, pattern = mails_path))
+          
 # users[1:10, ]
 ```
 
@@ -298,16 +299,17 @@ plot(graph,
 dev.off()
 ```
 
-What happened to causholli-m? (he/she form a cluster him/herself.)
+In the inbox cluster/network figure, it seems that causholli-m forms a single cluster herself. Let's check what happened to causholli-m?
 
 ```{r}
-causholli_inbox <- inboxes.from.to.raw.df%>%
-  filter(to == 'causholli-m') %>%
-  filter(from %in% all_possible_mailnames)
+causholli_inbox <- inboxes.within.fromto.df %>%
+  filter(to == 'causholli-m')
+
+causholli_inbox
 ```
 
 It is just one email he/she sent him/herself,and that's why she is the
-only group.
+only group. This also enlightens us, considering only the `inbox` mails is far from enough!!
 
 ------------------------------------------------------------------------
 
@@ -331,7 +333,8 @@ all.fromto.df <- all.fromto.rawdf %>%
 
 all.fromto.df <- all.fromto.df %>% mutate(
     from = str_sub(from, 7, nchar(from) - 10),  # Extract "FROM" email address by cutting "@enron.com" in the end
-    to = sapply(str_split(all.fromto.df$to, "/"), "[", 9)     # Extract "TO" name from folder name
+    to =  str_remove(to, pattern = mails_path),   # Extract "TO" name from folder name
+    to = sapply(str_split(to, "/"), "[", 2)
   )
 
 # print(all.fromto.df)
@@ -497,5 +500,7 @@ c2_count_table
 
 graph <- graph_from_adjacency_matrix(c2_count_table, mode = "directed", weighted = TRUE, diag = FALSE)
 layout <- layout_with_fr(graph)
-plot(graph)
+png(paste0(mother_path, "/figure/cluster1_network.png"), height = 3200, width = 3200)
+plot(graph, vertex.size=5)
+dev.off
 ```
