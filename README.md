@@ -6,3 +6,9 @@ This repository contains all code and data required to reproduce our investigati
 
 The dataset contains email corpus data from 150 users, mostly senoir management of Enron, organized into folders. A brief introduction can be found in the `Introducing_the_Enron_Corpus.pdf`, which is under the `\data` folder of this repository. Meanwhile, the dataset, along with a thoroough explanation of its origin, can be found at http://www-2.cs.cmu.edu/~enron/.
 
+## Instruction 
+Waiting for update
+
+## Method
+
+
