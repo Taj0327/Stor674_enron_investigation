@@ -1,5 +1,6 @@
 #Part 1#########################################################################
 library(rstudioapi)
+library(dplyr)
 
 script_path <- rstudioapi::getActiveDocumentContext()$path
 mother_path <- dirname(dirname(script_path))
@@ -43,13 +44,13 @@ inboxes.from.to.df <- inboxes.from.to.df %>% mutate(
   to = sapply(str_split(to, "/"), "[", 2)
 )
 
-all.fromto.rawdf <- data.frame(
+all.from.to.raw.df <- data.frame(
   from = apply(as.data.frame(emails.all.files), 1, function(x){readLines(x, warn = F)[3]}), # read all the FROM lines
   to = emails.all.files, # use the folder name for TO
   stringsAsFactors = F # remain the strings as characters
 )
 
-all.fromto.df <- all.fromto.rawdf %>%
+all.fromto.df <- all.from.to.raw.df %>%
   filter(grepl("@enron.com", from))  # Filter for inside-company emails by filtering all the address end with "@enron.com"
 
 all.fromto.df <- all.fromto.df %>% mutate(
@@ -57,6 +58,13 @@ all.fromto.df <- all.fromto.df %>% mutate(
   to =  str_remove(to, pattern = mails_path),   # Extract "TO" name from folder name
   to = sapply(str_split(to, "/"), "[", 2)
 )
+
+within_mailpath_df <- all.from.to.raw.df %>%
+  filter(grepl("@enron.com", from)) %>%
+  mutate(path = to) %>%
+  mutate(to = str_remove(to, pattern = mails_path)) %>%
+  mutate(to = sapply(str_split(to, "/"), "[", 2),
+         from = str_sub(from, 7, nchar(from) - 10))
 
 #Part 2##############################################################################
 # Create list of usernames in inboxes and remove those users without "sent mails" (inactive account)
@@ -132,7 +140,7 @@ inboxes.within.fromto.df <- inboxes.within.fromto.df %>%
 
 # similarly
 all.within.fromto.df <- all.fromto.df %>%
-  filter(from %in% all_possible_mailnames)
+  filter(from %in% unique(users$mailname))
 
 # match the mailnames with names
 all.within.fromto.df <- all.within.fromto.df %>%
@@ -141,6 +149,24 @@ all.within.fromto.df <- all.within.fromto.df %>%
   mutate(name = users$name[match_row], from = name) %>%
   select(-match_row, -name)
 
+# filter out all those emails sent
+all.within.fromto.df <- all.within.fromto.df %>%
+  filter(from != to)
+
+within_mailpath_df <- within_mailpath_df %>%
+  mutate(match_row = match(from, users$mailname)) %>%
+  filter(!is.na(match_row)) %>%
+  mutate(name = users$name[match_row], from = name) %>%
+  select(-match_row, -name)
+
+# filter out all those emails sent
+within_mailpath_df <- within_mailpath_df %>%
+  filter(from != to)
+
 ###############################################################################
 
-save(inboxes.from.to.df, inboxes.within.fromto.df, all.fromto.df, all.within.fromto.df, users, file = paste0(mother_path, "/results/dfs.Rdata"))
+
+# save the results into /results
+save(inboxes.from.to.raw.df, inboxes.from.to.df, inboxes.within.fromto.df, 
+     all.fromto.df, all.within.fromto.df, users, within_mailpath_df, 
+     file = paste0(mother_path, "/results/dfs.Rdata"))

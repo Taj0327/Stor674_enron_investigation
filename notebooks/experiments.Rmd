@@ -114,12 +114,12 @@ First we plot histograms of the number of emails every user sent/received.
 # make histograms of all the receivers and senders
 hist_sent <- ggplot(inboxes.within.fromto.df, aes(x = from)) +
   geom_bar() +
-  labs(title = "histogram of inbox emails sent within company", x = 'Sent by:') +
+  labs(title = "Inbox emails sent within company", x = 'Sent by:') +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 hist_received <- ggplot(inboxes.within.fromto.df, aes(x = to)) +
   geom_bar() +
-  labs(title = "histogram of inbox emails received within company", x = 'Sent to:') +
+  labs(title = "Inbox emails received within company", x = 'Sent to:') +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 plot(hist_received)
@@ -140,7 +140,7 @@ filtered_sent <- inboxes.within.fromto.df %>%
 
 hist_sent <- ggplot(filtered_sent, aes(x = from)) +
   geom_bar() +
-  labs(title = "histogram of inbox emails sent within company (>=50)", x = 'Sent by:') +
+  labs(title = "Inbox emails sent within company (>=50)", x = 'Sent by:') +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 filtered_receive <- inboxes.within.fromto.df %>%
@@ -152,7 +152,7 @@ filtered_receive <- inboxes.within.fromto.df %>%
 
 hist_received <- ggplot(filtered_receive, aes(x = to)) +
   geom_bar() +
-  labs(title = "histogram of inbox emails received within company(>=50)", x = 'Sent to:') +
+  labs(title = "Inbox emails received within company(>=50)", x = 'Sent to:') +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 plot(hist_received)
@@ -166,9 +166,13 @@ common_users <- intersect(filtered_sent$from, filtered_receive$to)
 print(common_users)
 ```
 
-Among them, tycholiz-b is VP Trading, ENA Gas West, shackleton-s is VP ENA & Senior Counsel, dasovich-j is Dir State Government Affairs, heard-m is Specialist Legal.
+Among them, tycholiz-b is VP Trading, ENA Gas West, shackleton-s is VP ENA & Senior Counsel, dasovich-j is Dir State Government Affairs, heard-m is Specialist Legal. Most of these high-frequency users are actually the ones managing groups of people.
 
-Also, we check the mail clusters and social network plots:
+Also, we check the mail clusters and social network plots using a Fruchterman-Reingold (FR) layout.
+
+> Force-directed layouts try to get a nice-looking graph where edges are similar in length and cross each other as little as possible. They simulate the graph as a physical system. Nodes are electrically charged particles that repulse each other when they get too close. The edges act as springs that attract connected nodes closer together. As a result, nodes are evenly distributed through the chart area, and the layout is intuitive in that **nodes which share more connections are closer to each other**.
+
+**Need to notice that, the distances between nodes are not meaningful (they do not necessarily measure the "distance" of two users).**
 
 ```{r, warning=FALSE, message=FALSE}
 set.seed(321)
@@ -183,11 +187,14 @@ mail_count_table <- table(factor(inboxes.within.fromto.df$from, levels = all_nam
 mail_count_df <- melt(mail_count_table)
 
 # Create a heatmap using ggplot2
-ggplot(mail_count_df, aes(x = Var1, y = Var2, fill = log(value))) +
+ggplot(mail_count_df, aes(x = Var1, y = Var2, fill = log(value+1))) +
   geom_tile() +
   scale_fill_gradient(low = "white", high = "blue") +
-  labs(title = "Email Interaction Heatmap", x = "From", y = "To", fill = "Count") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  labs(title = "Email Interaction Heatmap (log(count)+1)", x = "From", y = "To", fill = "Count") +
+  scale_x_discrete(breaks = levels(mail_count_df$Var1)[seq(1, length(levels(mail_count_df$Var1)), by = 5)]) +
+  scale_y_discrete(breaks = levels(mail_count_df$Var2)[seq(1, length(levels(mail_count_df$Var2)), by = 5)]) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(hjust = 1))
 
 # Create a graph from the matrix
 graph <- graph_from_adjacency_matrix(mail_count_table, mode = "undirected", weighted = TRUE, diag = FALSE)
@@ -245,38 +252,38 @@ We also make the same histograms to view the top senders/receivers:
 # filter the mails
 filtered_sent <- all.within.fromto.df %>%
   group_by(from) %>%
-  filter(n() >= 2000) %>%
+  filter(n() >= 300) %>%
   mutate(num_from = n()) %>%
   ungroup() %>%
   mutate(from = factor(from, levels = names(sort(table(from), decreasing = TRUE))))
 
 hist_sent <- ggplot(filtered_sent, aes(x = from)) +
   geom_bar() +
-  labs(title = "histogram of all emails sent within company (>=2000)", x = 'Sent by:') +
+  labs(title = "histogram of all emails sent within company (>=200)", x = 'Sent by:') +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 filtered_receive <- all.within.fromto.df %>%
   group_by(to) %>%
-  filter(n() >= 2000) %>%
+  filter(n() >= 200) %>%
   mutate(num_to = n()) %>%
   ungroup() %>%
   mutate(to = factor(to, levels = names(sort(table(to), decreasing = TRUE))))
 
 hist_received <- ggplot(filtered_receive, aes(x = to)) +
   geom_bar() +
-  labs(title = "histogram of all emails received within company(>=2000)", x = 'Sent to:') +
+  labs(title = "histogram of all emails received within company(>=300)", x = 'Sent to:') +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 plot(hist_received)
 plot(hist_sent)
 ```
 
-Now the results are quite convincing when we consider all the mails within the users. The highest in both From and To, is Kay Mann (mann-k), who was the head of legal for Enron. The fact that she sent so many emails is ironical, seeing as how Enron was breaking every law in the book. Besides, the newly-added users are germany-c, Capacity Trader, jones-t, Senior Legal Specialist, scott-s, Assistant Trader, sager-e, VP & Assistant General Counsel.
-
 ```{r}
 common_users <- intersect(filtered_sent$from, filtered_receive$to)
 print(common_users)
 ```
+
+The results are quite convincing when we consider all the mails within the users. The highest in both From and To, is Kay Mann (mann-k), who was the head of legal for Enron. The fact that she sent so many emails is ironical, seeing as how Enron was breaking every law in the book. Besides, some of the newly-added users are germany-c, Capacity Trader, jones-t, Senior Legal Specialist, scott-s, Assistant Trader and sager-e, VP & Assistant General Counsel.
 
 We also plot the clusters and network using all the email sending/receiving information.
 
@@ -293,11 +300,14 @@ mail_count_table <- table(factor(all.within.fromto.df$from, levels = all_names),
 mail_count_df <- melt(mail_count_table)
 
 # Create a heatmap using ggplot2
-ggplot(mail_count_df, aes(x = Var1, y = Var2, fill = log(value))) +
+ggplot(mail_count_df, aes(x = Var1, y = Var2, fill = log(value+1))) +
   geom_tile() +
   scale_fill_gradient(low = "white", high = "blue") +
-  labs(title = "Email Interaction Heatmap", x = "From", y = "To", fill = "Count") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  labs(title = "Email Interaction Heatmap", x = "From", y = "To", fill="log(count+1)") +
+  scale_x_discrete(breaks = levels(mail_count_df$Var1)[seq(1, length(levels(mail_count_df$Var1)), by = 5)]) +
+  scale_y_discrete(breaks = levels(mail_count_df$Var2)[seq(1, length(levels(mail_count_df$Var2)), by = 5)]) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(hjust = 1))
 
 # Create a graph from the matrix
 graph <- graph_from_adjacency_matrix(mail_count_table, mode = "undirected", weighted = TRUE, diag = FALSE)
@@ -334,18 +344,39 @@ dev.off()
 
 ![All Network](../figures/email_all_network.png)
 
-### Look further into the clusters
+## Semantic Analysis
 
-From the email_all_cluster figure, we pick two best performing clusers (with human eye), get the members and export them into cluster1 and cluster2. Now under cluster1 and cluster2, we have the names, email file directories and mailnames of these users within.
+load("semantic analysis result.Rdata")
+load("xxx .Rdata")
+
+
+
+### Communities under different types of emails
+
+Since the cluster algorithm has randomness in it (the louvain cluster algorithm starts from random initial points), we run the algorithm multiple times and catch the cluster with top modularity scores.
+
+```{r}
+source(paste0(mother_path, "/scripts/Cluster.R"))
+
+collected_clusters_df <- data.frame(matrix(nrow=0, ncol=2))
+colnames(collected_clusters_df) <- c('cluster', 'score')
+
+for (i in seq(30)){
+  top_three_df <- get_top_three(matrix = all.within.fromto.df)
+  collected_clusters_df <- rbind(collected_clusters_df, top_three_df)
+}
+
+collected_clusters_df$score <- as.numeric(unlist(collected_clusters_df$score))
+
+top_clusters <- collected_clusters_df %>%
+  group_by(cluster) %>%
+  summarise(avg_score = mean(score, na.rm = TRUE))
+```
+
+Here are some properties of our aimed cluster:
+
 
 ```{R, include=FALSE}
-# first save the community results into .csv files
-# community_df <- data.frame(
-#   node = V(graph)$name,
-#   community = membership(community)
-# )
-# write.csv(community_df, paste0(mother_path, "/results/community_assignments.csv"), row.names = FALSE)
-
 # get the membership information
 membership(community)
 target_community <- 10
