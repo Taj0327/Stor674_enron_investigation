@@ -4,11 +4,12 @@ This repository contains all code and data required to reproduce our investigati
 
 ## Environment setting
 
-Use this code in your Terminal to load our docker image for this project.
-
-```{bash}
-docker xxx ......
+### Pull the Image from Docker Hub
+To use the pre-built Docker image for this project, run:
+```bash
+docker pull chengze123/enron-project:latest
 ```
+
 
 ## Dataset
 
