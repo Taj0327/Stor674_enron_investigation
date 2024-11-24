@@ -1,5 +1,5 @@
-# Use the rocker/tidyverse image as the base image
-FROM rocker/tidyverse:latest
+# Use the rocker/rstudio image as the base image
+FROM rocker/rstudio:latest
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -26,8 +26,18 @@ COPY . /home/project
 # Set permissions for the project folder
 RUN chmod -R 755 /home/project
 
-# Expose port 8787 for RStudio Server (optional, if needed)
+# Expose port 8787 for RStudio Server
 EXPOSE 8787
 
-# Default command: Start a bash shell for interactive use
-CMD ["bash"]
+# Add a default user for RStudio Server
+RUN useradd -m -d /home/rstudio -g users -s /bin/bash rstudio && \
+    echo "rstudio:rstudio" | chpasswd && \
+    chmod -R 777 /home/rstudio
+
+# Set RStudio environment options (Optional)
+ENV USER=rstudio
+ENV PASSWORD=rstudio
+ENV ROOT=TRUE
+
+# Default command: Start RStudio Server
+CMD ["/init"]
