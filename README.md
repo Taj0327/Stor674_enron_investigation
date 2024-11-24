@@ -17,12 +17,33 @@ The dataset contains email corpus data from 150 users, mostly senior management 
 
 Also, you can download the code with `/scripts/download_enron.R` in our repository, or directly call the script in our `/notebook/investigation.rmd`, which would automatically detect the existence of the dataset and decide whether to download it.
 
-### API Setting
-For those who wish to verify whether the labels are assigned fairly in the dataset, we provide the script `Classify_email.R`. To use this script, you will need to obtain an API key and API URL.
+## Instruction of Code
 
-#### Free GPT API 
-You can use the free GPT API provided by third-party platforms. One example is available at the [ChatAnywhere GitHub repository](https://github.com/chatanywhere/GPT_API_free), which includes instructions to obtain a free API key and the corresponding API URL.
+Our project is organized to include results, analysis, EDA, explanations, and data processing. The main tasks can be executed by directly running `/notebook/investigation.rmd`. Below is a detailed guide to understanding and using the code:
+
+1. **Functions**  
+   - Most of the functions used in this project are located in the `/script` directory.
+
+2. **PDF Version**  
+   - For better readability, a PDF version of the notebook is available at `/notebook/investigation.pdf`.
+
+3. **Results**  
+   - The results are stored as an RData file at `/results/dfs.Rdata`. This file is pre-loaded by `/notebook/investigation.rmd`.
+   - To reproduce our results:
+     1. Comment out the line in `/notebook/investigation.rmd` that loads this dataset.
+     2. Run the data loading script located at `/script/data_loading`.
+     3. Follow the experiments outlined in `/notebook/investigation.rmd` or design your own experiments.
+
+
+### API Setting
+
+To verify whether the labels are assigned fairly in the dataset, we provide the script `Classify_email.R`. To use this script, you will need an API key and API URL. Below are instructions to obtain them:
+
+#### Free GPT API
+You can access a free GPT API through third-party platforms. For example, the [ChatAnywhere GitHub repository](https://github.com/chatanywhere/GPT_API_free) provides guidance on obtaining a free API key and API URL.
 
 #### Official ChatGPT API
-For the official OpenAI ChatGPT API, please visit the [OpenAI API settings page](https://platform.openai.com/signup) to set up your API key and endpoint.
+For the official OpenAI ChatGPT API, visit the [OpenAI API settings page](https://platform.openai.com/signup) to set up your API key and endpoint.
+
+
 
