@@ -6,6 +6,8 @@ set.seed(327)
 # get the path and load essential data
 script_path <- rstudioapi::getActiveDocumentContext()$path
 mother_path <- dirname(dirname(script_path))
+script_path <- paste0(mother_path, "/scripts")
+
 load(paste0(mother_path, "/results/dfs.Rdata"))
 
 all_names <- users$name

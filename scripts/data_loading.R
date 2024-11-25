@@ -4,7 +4,7 @@ library(dplyr)
 
 script_path <- rstudioapi::getActiveDocumentContext()$path
 mother_path <- dirname(dirname(script_path))
-
+script_path <- paste0(mother_path, "/scripts")
 mails_path <- paste0(mother_path, '/data/enron_mail_20150507/maildir/')
 
 # Retrieval all files in the maildir

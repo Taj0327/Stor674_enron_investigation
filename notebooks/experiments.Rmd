@@ -60,6 +60,7 @@ Sys.setenv(mother_path = mother_path)
 script_path <- paste0(mother_path, "/scripts")
 data_path <- paste0(mother_path, "/data")
 results_path <- paste0(mother_path, "/results")
+notebook_path <- paste0(mother_path, "/notebooks")
 ```
 
 Now download the data (if needed) and load all the data we need for further investigation. If you want to load the data by yourself or using different filters, please check the `/scripts/data_loading.R` for customized operations.
