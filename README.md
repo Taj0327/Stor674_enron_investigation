@@ -19,7 +19,7 @@ Also, you can download the code with `/scripts/download_enron.R` in our reposito
 
 ## Instruction of Code
 
-Our project is organized to include results, analysis, EDA, explanations, and data processing. The main tasks can be executed by directly running `/notebook/investigation.rmd`. Below is a detailed guide to understanding and using the code:
+Our project is organized to include results, analysis, EDA, explanations, and data processing. The main tasks can be executed by directly running `/notebook/experiments.rmd`. Below is a detailed guide to understanding and using the code:
 
 1. **Functions**  
    - Most of the functions used in this project, include data downloading, data loading and processing as well as other functions used in our analysis, can be found under the `/scripts` directory, where a more detailed README.md file is provided.
