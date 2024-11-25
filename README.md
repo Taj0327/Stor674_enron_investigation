@@ -13,11 +13,11 @@ docker pull chengze123/enron-project:latest
 
 ## Dataset
 
-The dataset contains email corpus data from 150 users, mostly senior management of Enron, organized into folders. A brief introduction can be found in the `Introducing_the_Enron_Corpus.pdf`, which is under the `\data` folder of this repository. Meanwhile, the dataset, along with a thorough explanation of its origin, can be found at [here](http://www-2.cs.cmu.edu/~enron/).
+The dataset contains email corpus data organized into folders from 150 users, mostly senior management of Enron, an energy company. A brief introduction can be found in the `Introducing_the_Enron_Corpus.pdf`, which is under the `/data` folder of this repository. Meanwhile, the dataset, along with a thorough explanation of its origin, can be found at [here](http://www-2.cs.cmu.edu/~enron/).
 
 Also, you can download the code with `/scripts/download_enron.R` in our repository, or directly call the script in our `/notebook/experiments.rmd`, which would automatically detect the existence of the untarred dataset and decide whether to download it.
 
-## Instruction of Code
+## Instructions of Code
 
 Our project is organized to include results, analysis, EDA, explanations, and data processing. The main tasks can be executed by directly running `/notebook/experiments.rmd`. Below is a detailed guide to understanding and using the code:
 
