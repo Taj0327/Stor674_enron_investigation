@@ -22,15 +22,18 @@ This notebook tries to provide a one-click-runs-all codes for data loading, proc
 
 The folder structure of this project should be like:
 
-```{plaintext}
+```         
 ├── (Your name for the project folder)
+    ├── Dockerfile
     ├── README.md
     ├── data
     │   ├── Introducing_the_Enron_Corpus.pdf
     │   ├── enron_mail_20150507
     │   │   └── maildir
+    │   ├── enron_mail_20150507.tar.gz
     │   └── klimt-ecml04.pdf
     ├── figures
+    │   ├── cluster1_network.png
     │   ├── email_all_cluster.png
     │   ├── email_all_network.png
     │   ├── email_inbox_cluster.png
@@ -38,14 +41,21 @@ The folder structure of this project should be like:
     ├── final_project.Rmd
     ├── final_project.html
     ├── notebooks
-    │   └── experiments.Rmd
+    │   ├── experiments.Rmd
+    │   └── experiments.html
     ├── results
-    │   └── community_assignments.csv
+    │   ├── dfs.Rdata
+    │   └── users.Rdata
     └── scripts
+        ├── Cluster.R
+        ├── Generate_Users.R
+        ├── README.md
+        ├── classify_email_type.R
+        ├── data_classify.R
         ├── data_loading.R
         ├── download_enron.R
-        ├── starting_code.R
-        └── trial_igraph.R
+        ├── extract_cluster.R
+        └── new_data_classify.R
 ```
 
 **Make sure the folders are correctly structured as above for reproducibility concerns!**
@@ -348,10 +358,7 @@ dev.off()
 
 ## Semantic Analysis
 
-load("semantic analysis result.Rdata")
-load("xxx .Rdata")
-
-
+load("semantic analysis result.Rdata") load("xxx .Rdata")
 
 ### Communities under different types of emails
 
@@ -379,7 +386,6 @@ top_clusters <- collected_clusters_df %>%
 head(top_clusters$cluster,3)
 top_clusters[1:3, 2]
 ```
-
 
 ```{R, include=FALSE}
 # get the membership information
