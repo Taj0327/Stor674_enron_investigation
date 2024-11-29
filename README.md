@@ -45,3 +45,9 @@ For the official OpenAI ChatGPT API, visit the [OpenAI API settings page](https:
 
 
 
+## Instruction 
+Waiting for update
+
+## Method
+
+
