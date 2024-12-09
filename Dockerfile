@@ -29,9 +29,8 @@ RUN chmod -R 755 /home/project
 # Expose port 8787 for RStudio Server
 EXPOSE 8787
 
-# Add a default user for RStudio Server
-RUN useradd -m -d /home/rstudio -g users -s /bin/bash rstudio && \
-    echo "rstudio:rstudio" | chpasswd && \
+# Update password and permissions for the existing rstudio user
+RUN echo "rstudio:rstudio" | chpasswd && \
     chmod -R 777 /home/rstudio
 
 # Set RStudio environment options (Optional)
