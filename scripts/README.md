@@ -1,4 +1,4 @@
-This folder contains all the R scripts needed in our analysis.
+This folder contains all the R scripts needed in our analysis. For those people who want to run the code in their local environment, please run `prepare_lib.R` first to install all required packages. 
 
 ## Data Cleaning and Processing
 
@@ -10,4 +10,20 @@ If you are going to modify the data cleaning and processing of our analysis, ple
 
 ## Cluster analysis
 
-## Semantic analysis
+
+## Semantic Analysis
+
+This part contains three scripts for performing semantic analysis on email data. Below is an overview of the scripts and their functions.
+
+### `semantic_analysis.R`
+This script includes the primary methods and results of the semantic analysis. It serves as the main script for conducting the analysis.
+
+### `new_data_classify.R`
+This script interacts with the ChatGPT API to label emails. If you want to use this functionality:
+- Read through the code to understand the setup process.
+- Follow the instructions in this README to ensure all necessary configurations are in place.
+
+### `data_classify.R`
+This script processes the raw data used by `semantic_analysis.R` to prepare it for analysis.
+
+
