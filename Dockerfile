@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install R packages required for the project
-RUN R -e "install.packages(c('rstudioapi', 'dplyr', 'jsonlite', 'httr', 'stringr', 'purrr', 'ggplot2', 'igraph', 'reshape2'))"
+RUN R -e "install.packages(c('rstudioapi', 'dplyr', 'jsonlite', 'httr', 'stringr', 'purrr', 'ggplot2', 'igraph', 'reshape2','tidyr'))"
 
 # Set the working directory inside the container
 WORKDIR /home/project
