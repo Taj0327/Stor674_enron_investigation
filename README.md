@@ -4,12 +4,58 @@ This repository contains all code and data required to reproduce our investigati
 
 ## Environment Setting
 
-### Pull the Image from Docker Hub
-To use the pre-built Docker image for this project, run:
+### 1. Clone this repository to your local machine
+
+Run the following commands in your terminal:
+
 ```bash
-docker pull chengze123/enron-project:latest
+git clone https://github.com/Taj0327/Stor674_enron_investigation.git
+cd Stor674_enron_investigation
+
+```
+### 2. Build the Docker image using the `Dockerfile`
+
+Build the Docker image by executing the following command in the project directory (where the `Dockerfile` is located):
+
+```bash
+docker build -t enron-project .
 ```
 
+### 3. Run the Docker Container
+
+After building the Docker image, start the Docker container with the following command:
+
+```bash
+docker run -d -p 8787:8787 -e PASSWORD=<your_password> --name enron_project enron-project
+```
+
+Replace `<your_password>` with the password you want to use to log in to RStudio Server.
+
+### 4. Access RStudio Server
+
+1. Open your web browser and navigate to:
+   ```
+   http://localhost:8787
+   ```
+2. Log in using the following credentials:
+   - **Username:** `rstudio`
+   - **Password:** `<your_password>` (the password you set when starting the container).
+
+### 5. Stop the Docker Container
+
+To stop the running container, use the following command:
+
+```bash
+docker stop enron_project
+```
+
+### 6. Restart the Docker Container
+
+To restart the container after stopping it, run:
+
+```bash
+docker start enron_project
+```
 
 ## Dataset
 
